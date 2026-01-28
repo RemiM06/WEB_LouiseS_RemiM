@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Angular
+.angular/
+dist/
+
+# Environment
+.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Audio files (optionnel - décommenter si tu ne veux pas versionner les sons)
+# backend/public/audio/*.wav
+# backend/public/audio/*.mp3
