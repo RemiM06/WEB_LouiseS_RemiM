@@ -3,10 +3,10 @@ import { Document } from 'mongoose';
 
 @Schema()
 export class Sample extends Document {
-  @Prop()
+  @Prop({ required: true })
   name: string;
 
-  @Prop()
+  @Prop({ required: true })
   url: string;
 }
 

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Preset } from './presets.schema';
+import { Preset } from './preset.schema';
 import { initialPresets } from './initial-presets';
 
 @Injectable()
@@ -32,5 +32,10 @@ export class PresetsService {
   async restore() { // pour les tests
     await this.presetModel.deleteMany({});
     return await this.presetModel.insertMany(initialPresets);
+  }
+
+  async createPreset(presetData: Preset): Promise<Preset> {
+    const newPreset = new this.presetModel(presetData);
+    return newPreset.save();
   }
 }

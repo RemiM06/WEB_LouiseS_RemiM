@@ -1,7 +1,6 @@
 import { Controller, Get, Param, Patch, Body, Delete, Post } from '@nestjs/common';
 import { PresetsService } from './presets.service';
-import { Sample } from './sample.schema';
-import { Preset } from './presets.schema';
+import { Preset } from './preset.schema';
 
 @Controller('presets')
 export class PresetsController {
@@ -31,5 +30,10 @@ export class PresetsController {
   @Post('restore')
   async restore() {
     return await this.presetsService.restore();
+  }
+
+  @Post()
+  async createPreset(@Body() presetData: Preset): Promise<Preset> {
+    return await this.presetsService.createPreset(presetData);
   }
 }

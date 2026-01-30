@@ -7,7 +7,7 @@ export class Preset extends Document {
   @Prop({ required: true })
   category: string;
 
-  @Prop([Sample])
+  @Prop({ required: true, type: [Sample] })
   samples: Sample[];
 }
 
