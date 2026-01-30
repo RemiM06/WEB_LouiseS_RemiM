@@ -1,0 +1,48 @@
+/* Conteneur principal de la modale */
+mat-dialog-content {
+  min-width: 700px; /* On élargit un peu pour le confort */
+  padding-top: 20px !important;
+  display: flex;
+  flex-direction: column;
+  gap: 15px; /* Espace entre la catégorie et la liste de sons */
+}
+
+.full-width {
+  width: 100%;
+}
+
+/* Style pour chaque ligne de sample */
+.sample-row {
+  display: flex;
+  align-items: center; /* Aligne verticalement les inputs et la poubelle */
+  gap: 12px;           /* Espace entre les champs */
+  margin-bottom: 15px;
+  padding: 10px;
+  background-color: #f9f9f9; /* Un léger fond pour distinguer les lignes */
+  border-radius: 8px;
+}
+
+/* Champs de saisie */
+.sample-row mat-form-field {
+  flex: 1; /* Les deux champs prennent l'espace disponible équitablement */
+  margin-bottom: -1.25em; /* Compense la marge par défaut des form-fields */
+}
+
+/* L'icône poubelle */
+.delete-icon {
+  color: #d32f2f;
+  cursor: pointer;
+  transition: transform 0.2s;
+  margin-top: -5px; /* Ajustement précis */
+}
+
+.delete-icon:hover {
+  transform: scale(1.2);
+}
+
+/* Bouton Ajouter un son */
+.add-btn {
+  margin-top: 10px;
+  color: #2e7d32;
+  font-weight: 500;
+}
