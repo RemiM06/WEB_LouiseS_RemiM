@@ -1,0 +1,42 @@
+<h2 mat-dialog-title>Ajouter un nouveau Preset</h2>
+
+<mat-dialog-content [formGroup]="presetForm">
+  <mat-form-field class="full-width" appearance="outline">
+    <mat-label>Nom de la catégorie</mat-label>
+    <input matInput formControlName="category" placeholder="ex: Drum Kit Rock">
+  </mat-form-field>
+
+  <h3 style="margin: 10px 0">Samples</h3>
+
+  <div formArrayName="samples">
+    @for (s of samples.controls; track $index) {
+      <div [formGroupName]="$index" class="sample-row">
+        
+        <mat-form-field appearance="outline">
+          <mat-label>Nom du son</mat-label>
+          <input matInput formControlName="name" placeholder="Kick">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>URL</mat-label>
+          <input matInput formControlName="url" placeholder="http://...">
+        </mat-form-field>
+
+        <mat-icon class="delete-icon" (click)="removeSample($index)" title="Supprimer ce sample">
+          delete
+        </mat-icon>
+      </div>
+    }
+  </div>
+
+  <button mat-button class="add-btn" (click)="addSample()">
+    <mat-icon>add_circle</mat-icon> Ajouter un son
+  </button>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close>Annuler</button>
+  <button mat-raised-button color="primary" [disabled]="presetForm.invalid" (click)="onSubmit()">
+    Créer le Preset
+  </button>
+</mat-dialog-actions>

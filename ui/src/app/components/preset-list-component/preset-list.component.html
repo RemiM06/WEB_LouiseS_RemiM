@@ -1,0 +1,56 @@
+<div class="container">
+  <div class="header-actions">
+    <h2>Ma Bibliothèque de Presets</h2>
+
+    <div class="global-actions">
+      <div class="action-item" (click)="onAddPreset()">
+        <mat-icon class="add-icon">add_circle</mat-icon>
+        <span>Add</span>
+      </div>
+
+      <div class="restore-container" (click)="onRestore()">
+        <mat-icon color="accent">restore</mat-icon>
+        <span>Restore</span>
+      </div>
+    </div>
+  </div>
+
+  <mat-accordion multi="true"> @for (preset of presets; track preset._id) {
+      <mat-expansion-panel class="preset-card">
+        
+        <mat-expansion-panel-header class="custom-header">
+          <mat-panel-title>
+            <div class="header-container">
+              <div class="category-info">
+                <mat-icon class="blue-icon">library_music</mat-icon>
+                <span class="category-name">{{ preset.category }}</span>
+              </div>
+              <div class="description-row">
+                <span class="sample-count">{{ preset.samples.length }} samples</span>
+              </div>
+            </div>
+          </mat-panel-title>
+
+          <mat-panel-description class="header-controls">
+            <mat-icon class="green-icon clickable" (click)="$event.stopPropagation(); onRename(preset)">edit</mat-icon>
+            <mat-icon class="red-icon clickable" (click)="$event.stopPropagation(); onDelete(preset._id)">delete</mat-icon>
+          </mat-panel-description>
+        </mat-expansion-panel-header>
+
+        <mat-list>
+          @for (sample of preset.samples; track $index) {
+            <mat-list-item>
+              <mat-icon matListItemIcon>audiotrack</mat-icon>
+              <div matListItemTitle>{{ sample.name }}</div>
+              <div matListItemLine>{{ sample.url }}</div>
+            </mat-list-item>
+            @if (!$last) { <mat-divider></mat-divider> }
+          }
+        </mat-list>
+
+      </mat-expansion-panel>
+    } @empty {
+      <p style="text-align: center; padding: 20px;">Aucun preset trouvé. Cliquez sur Add !</p>
+    }
+  </mat-accordion>
+</div>

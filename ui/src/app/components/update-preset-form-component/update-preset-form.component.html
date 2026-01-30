@@ -1,0 +1,19 @@
+<h2 mat-dialog-title>Modifier la catégorie</h2>
+
+<mat-dialog-content [formGroup]="presetForm" style="padding-top: 10px;">
+  <p>Entrez le nouveau nom pour ce preset :</p>
+  
+  <mat-form-field class="full-width" appearance="outline">
+    <mat-label>Nom de la catégorie</mat-label>
+    <input matInput formControlName="category" placeholder="ex: Summer Mix">
+  </mat-form-field>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close>Annuler</button>
+  <button mat-raised-button color="primary" 
+          [disabled]="presetForm.invalid" 
+          (click)="onSave()">
+    Mettre à jour
+  </button>
+</mat-dialog-actions>
