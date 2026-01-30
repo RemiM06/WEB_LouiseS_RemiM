@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
-import { SamplesModule } from './samples/samples.module';
+import { PresetsModule } from './samples/presets.module';
 
 @Module({
   imports: [
-    SamplesModule,
+    PresetsModule,
     ConfigModule.forRoot({
       isGlobal: true,
     }),
