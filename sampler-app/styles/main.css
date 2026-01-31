@@ -104,6 +104,27 @@ header h1 {
     font-size: 0.9rem;
 }
 
+/* Barre de statut header */
+.status-bar {
+    margin-top: 10px;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+.midi-indicator {
+    font-size: 0.85rem;
+    color: #888;
+    background: rgba(255,255,255,0.1);
+    padding: 5px 15px;
+    border-radius: 20px;
+}
+
+#midi-status {
+    color: #00ff88;
+    font-weight: bold;
+}
+
 /* Barre de progression */
 .progress-section {
     margin-bottom: 20px;

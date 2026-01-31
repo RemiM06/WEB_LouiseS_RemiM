@@ -502,9 +502,105 @@ function setupKeyboardMapping() {
 }
 
 // ============================================
+// SUPPORT MIDI
+// Inspiré des exemples du cours
+// ============================================
+
+let midiAccess = null;
+let midiInputs = [];
+
+async function setupMIDI() {
+    if (!navigator.requestMIDIAccess) {
+        console.log('[MIDI] Web MIDI API non supportée par ce navigateur');
+        updateMidiStatus('Non supporté');
+        return;
+    }
+    
+    try {
+        midiAccess = await navigator.requestMIDIAccess();
+        console.log('[MIDI] Accès MIDI obtenu');
+        
+        // Écouter les changements de connexion
+        midiAccess.onstatechange = onMidiStateChange;
+        
+        // Connecter les entrées MIDI existantes
+        connectMidiInputs();
+        
+    } catch (error) {
+        console.error('[MIDI] Erreur accès MIDI:', error);
+        updateMidiStatus('Erreur');
+    }
+}
+
+function connectMidiInputs() {
+    midiInputs = [];
+    
+    for (const input of midiAccess.inputs.values()) {
+        console.log(`[MIDI] Entrée détectée: ${input.name} (${input.manufacturer})`);
+        input.onmidimessage = onMidiMessage;
+        midiInputs.push(input);
+    }
+    
+    if (midiInputs.length > 0) {
+        updateMidiStatus(`${midiInputs.length} appareil(s) connecté(s)`);
+        console.log(`[MIDI] ${midiInputs.length} entrée(s) MIDI connectée(s)`);
+    } else {
+        updateMidiStatus('Aucun appareil');
+        console.log('[MIDI] Aucune entrée MIDI détectée');
+    }
+}
+
+function onMidiStateChange(event) {
+    console.log(`[MIDI] État changé: ${event.port.name} - ${event.port.state}`);
+    connectMidiInputs();
+}
+
+function onMidiMessage(event) {
+    const [status, note, velocity] = event.data;
+    
+    // Note On (status 144-159 pour les canaux 1-16)
+    // Note Off (status 128-143) ou Note On avec velocity 0
+    const isNoteOn = (status >= 144 && status <= 159) && velocity > 0;
+    const isNoteOff = (status >= 128 && status <= 143) || ((status >= 144 && status <= 159) && velocity === 0);
+    
+    if (isNoteOn) {
+        // Mapper les notes MIDI aux pads
+        // Notes 36-47 (C2-B2) ou 60-71 (C4-B4) typiques pour les pads
+        let padIndex = -1;
+        
+        // Mapping pour pads MIDI (notes 36-47, typique pour drum pads)
+        if (note >= 36 && note <= 47) {
+            padIndex = note - 36;
+        }
+        // Mapping alternatif (notes 60-71, octave du milieu)
+        else if (note >= 60 && note <= 71) {
+            padIndex = note - 60;
+        }
+        // Mapping générique (toutes les notes, modulo 12)
+        else {
+            padIndex = note % 12;
+        }
+        
+        // Jouer le pad si valide
+        if (padIndex >= 0 && padIndex < audioEngine.sampleCount) {
+            console.log(`[MIDI] Note ${note} (vel: ${velocity}) -> Pad ${padIndex}`);
+            onPadClick(padIndex);
+        }
+    }
+}
+
+function updateMidiStatus(status) {
+    const midiStatusEl = document.getElementById('midi-status');
+    if (midiStatusEl) {
+        midiStatusEl.textContent = status;
+    }
+}
+
+// ============================================
 // DÉMARRAGE
 // ============================================
 
 console.log('Sampler Audio - Démarrage');
 loadPresetsList();
 setupKeyboardMapping();
+setupMIDI();

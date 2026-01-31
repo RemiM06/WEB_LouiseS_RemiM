@@ -77,7 +77,9 @@ J'ai développé une architecture modulaire en séparant clairement le moteur au
 
 8. **Mapping clavier** : Les touches A, Z, E, R (ligne du bas) et Q, S, D, F (ligne du haut) sont mappées sur les pads pour jouer les sons au clavier. Chaque pad affiche sa touche associée (inspiré de `Seance4_IntroWebAudio/Assignment/js/SamplerGUI.js`).
 
-9. **Mode Headless** : Page de test (`headless.html`) permettant de tester le moteur audio de manière isolée, sans interface graphique. Toutes les fonctionnalités sont accessibles via des boutons et les résultats s'affichent dans une console intégrée.
+9. **Support MIDI** : Possibilité de jouer les pads avec un contrôleur MIDI hardware (ou virtuel comme MIDIkeys sur Mac, loopMIDI sur Windows). Les notes MIDI 36-47 (C2-B2) et 60-71 (C4-B4) sont mappées sur les pads 0-11. Un indicateur affiche le statut de connexion MIDI.
+
+10. **Mode Headless** : Page de test (`headless.html`) permettant de tester le moteur audio de manière isolée, sans interface graphique. Toutes les fonctionnalités sont accessibles via des boutons et les résultats s'affichent dans une console intégrée.
 
 #### Technologies utilisées
 
