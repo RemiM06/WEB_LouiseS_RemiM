@@ -45,10 +45,8 @@ async function loadPresetsList() {
         
         allPresets = await presetService.getAllPresets();
         
-        // Extraire les catégories uniques
         const categories = [...new Set(allPresets.map(p => p.category))].filter(Boolean);
         
-        // Créer les boutons de catégorie
         categories.forEach(category => {
             const btn = document.createElement('button');
             btn.className = 'category-btn';
@@ -58,7 +56,6 @@ async function loadPresetsList() {
             categoryButtons.appendChild(btn);
         });
         
-        // Afficher tous les presets par défaut
         filterByCategory('all');
         
         loadingStatus.textContent = `${allPresets.length} presets disponibles`;
@@ -72,19 +69,16 @@ async function loadPresetsList() {
 function filterByCategory(category) {
     currentCategory = category;
     
-    // Mettre à jour les boutons actifs
     document.querySelectorAll('.category-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.category === category);
     });
     
-    // Filtrer les presets
     if (category === 'all') {
         filteredPresets = allPresets;
     } else {
         filteredPresets = allPresets.filter(p => p.category === category);
     }
     
-    // Mettre à jour le menu déroulant
     updatePresetSelect();
 }
 
@@ -109,45 +103,16 @@ function updatePresetSelect() {
 }
 
 // ============================================
-// CHARGEMENT D'UN PRESET
+// PROGRESSION
 // ============================================
 
-async function loadPreset(presetId) {
-    if (!presetId) return;
-    
-    try {
-        const preset = await presetService.getPresetById(presetId);
-        currentPreset = preset;
-        
-        progressSection.style.display = 'block';
-        updateProgress(0);
-        
-        audioEngine.init();
-        
-        const presetForEngine = {
-            name: preset.name || preset.category || 'Preset',
-            samples: preset.samples || []
-        };
-        
-        await audioEngine.loadPreset(presetForEngine, (progress, loaded, total) => {
-            updateProgress(progress);
-            loadingStatus.textContent = `Chargement ${loaded}/${total}...`;
-        });
-        
-        generatePads(presetForEngine.samples.length);
-        
-        progressSection.style.display = 'none';
-        loadingStatus.textContent = `"${presetForEngine.name}" chargé !`;
-        
-    } catch (error) {
-        loadingStatus.textContent = 'Erreur chargement preset';
-        console.error('Erreur:', error);
-    }
-}
-
 function updateProgress(percent) {
-    progressFill.style.width = `${percent}%`;
-    progressText.textContent = `${percent}%`;
+    if (progressFill) {
+        progressFill.style.width = `${percent}%`;
+    }
+    if (progressText) {
+        progressText.textContent = `${percent}%`;
+    }
 }
 
 // ============================================
@@ -162,13 +127,11 @@ function generatePads(count) {
         return;
     }
     
-    // Calcul de la grille (4 colonnes max)
     const cols = Math.min(4, count);
     const rows = Math.ceil(count / cols);
     
     padsGrid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
     
-    // Créer tous les pads
     const padsArray = [];
     
     for (let i = 0; i < count; i++) {
@@ -179,7 +142,10 @@ function generatePads(count) {
         pad.dataset.index = i;
         pad.innerHTML = `
             <span class="pad-number">${i + 1}</span>
-            <span class="pad-name">${sampleInfo?.name || 'Vide'}</span>
+            <span class="pad-name">${sampleInfo?.name || 'Chargement...'}</span>
+            <div class="pad-progress-container">
+                <div class="pad-progress-bar" id="pad-progress-${i}"></div>
+            </div>
         `;
         
         pad.addEventListener('click', () => onPadClick(i));
@@ -187,18 +153,12 @@ function generatePads(count) {
         padsArray.push(pad);
     }
     
-    // Réorganiser pour afficher de bas en haut
-    // Exemple avec 8 pads (2 lignes x 4 colonnes) :
-    // DOM order:  row 1 (indices 4-7), puis row 0 (indices 0-3)
-    // Visual:     row 0 en bas, row 1 en haut
-    
     for (let row = rows - 1; row >= 0; row--) {
         for (let col = 0; col < cols; col++) {
             const padIndex = row * cols + col;
             if (padIndex < count) {
                 padsGrid.appendChild(padsArray[padIndex]);
             } else {
-                // Pad vide pour compléter la grille
                 const emptyPad = document.createElement('div');
                 emptyPad.className = 'pad empty';
                 emptyPad.innerHTML = '<span class="pad-number">-</span><span class="pad-name">Vide</span>';
@@ -207,8 +167,102 @@ function generatePads(count) {
         }
     }
     
-    console.log(`[Main] ${count} pads générés (grille ${cols}x${rows}, pad 0 en bas à gauche)`);
+    console.log(`[Main] ${count} pads générés`);
 }
+
+// ============================================
+// CHARGEMENT D'UN PRESET AVEC PROGRESSION PAR PAD
+// ============================================
+
+async function loadPreset(presetId) {
+    if (!presetId) return;
+    
+    try {
+        console.log(`[Main] Chargement du preset ${presetId}...`);
+        
+        const preset = await presetService.getPresetById(presetId);
+        currentPreset = preset;
+        
+        // Afficher la progression globale (avec vérification)
+        if (progressSection) {
+            progressSection.style.display = 'block';
+        }
+        updateProgress(0);
+        
+        audioEngine.init();
+        
+        const presetForEngine = {
+            name: preset.name || preset.category || 'Preset',
+            samples: preset.samples || []
+        };
+        
+        generatePads(presetForEngine.samples.length);
+        
+        const totalSamples = presetForEngine.samples.length;
+        
+        for (let i = 0; i < totalSamples; i++) {
+            const sample = presetForEngine.samples[i];
+            const padProgressBar = document.getElementById(`pad-progress-${i}`);
+            
+            if (padProgressBar) {
+                padProgressBar.style.width = '0%';
+                padProgressBar.classList.add('loading');
+            }
+            
+            try {
+                await audioEngine.loadSample(sample.url, sample.name, i);
+                
+                if (padProgressBar) {
+                    padProgressBar.style.width = '100%';
+                    padProgressBar.classList.remove('loading');
+                    padProgressBar.classList.add('loaded');
+                }
+                
+                const pad = padsGrid.querySelector(`[data-index="${i}"]`);
+                if (pad) {
+                    const padName = pad.querySelector('.pad-name');
+                    if (padName) {
+                        padName.textContent = sample.name;
+                    }
+                }
+                
+            } catch (error) {
+                console.error(`[Main] Erreur chargement sample ${i}:`, error);
+                if (padProgressBar) {
+                    padProgressBar.classList.remove('loading');
+                    padProgressBar.classList.add('error');
+                }
+            }
+            
+            const globalProgress = Math.round(((i + 1) / totalSamples) * 100);
+            updateProgress(globalProgress);
+            loadingStatus.textContent = `Chargement ${i + 1}/${totalSamples}...`;
+        }
+        
+        setTimeout(() => {
+            if (progressSection) {
+                progressSection.style.display = 'none';
+            }
+            
+            document.querySelectorAll('.pad-progress-container').forEach(container => {
+                container.style.opacity = '0';
+            });
+        }, 500);
+        
+        loadingStatus.textContent = `"${presetForEngine.name}" chargé!`;
+        
+        console.log(`[Main] Preset "${presetForEngine.name}" chargé`);
+        
+    } catch (error) {
+        loadingStatus.textContent = 'Erreur lors du chargement du preset';
+        if (progressSection) {
+            progressSection.style.display = 'none';
+        }
+        console.error('[Main] Erreur chargement preset:', error);
+    }
+}
+
+// ...existing code (onPadClick, drawWaveform, updateTrimControls, etc.)...
 
 // ============================================
 // INTERACTION PADS

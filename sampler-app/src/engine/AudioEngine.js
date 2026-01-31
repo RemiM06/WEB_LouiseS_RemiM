@@ -20,30 +20,37 @@ export class AudioEngine {
         console.log('[AudioEngine] Initialisé - Sample Rate:', this.audioContext.sampleRate);
     }
 
-    /**
-     * Charge un fichier audio depuis une URL
-     * @param {string} url - URL du fichier audio
-     * @returns {Promise<AudioBuffer>}
-     */
-    async loadSample(url) {
-        if (!this.isInitialized) {
-            this.init();
+/**
+ * Charge un sample individuel
+ * @param {string} url - URL du sample
+ * @param {string} name - Nom du sample
+ * @param {number} index - Index du pad
+ */
+async loadSample(url, name, index) {
+    try {
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status} pour ${url}`);
         }
-
-        try {
-            const response = await fetch(url);
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status} pour ${url}`);
-            }
-            const arrayBuffer = await response.arrayBuffer();
-            const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
-            console.log(`[AudioEngine] Sample chargé: ${url} (${audioBuffer.duration.toFixed(2)}s)`);
-            return audioBuffer;
-        } catch (error) {
-            console.error(`[AudioEngine] Erreur chargement ${url}:`, error);
-            throw error;
-        }
+        
+        const arrayBuffer = await response.arrayBuffer();
+        const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
+        
+        this.samples[index] = {
+            name: name,
+            buffer: audioBuffer,
+            trimStart: 0,
+            trimEnd: audioBuffer.duration
+        };
+        
+        console.log(`[AudioEngine] Sample "${name}" chargé (${audioBuffer.duration.toFixed(2)}s)`);
+        
+    } catch (error) {
+        console.error(`[AudioEngine] Erreur chargement ${url}:`, error);
+        throw error;
     }
+}
 
     /**
      * Charge un preset complet (tous les samples)
