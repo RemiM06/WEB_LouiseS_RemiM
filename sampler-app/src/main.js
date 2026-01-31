@@ -45,10 +45,8 @@ async function loadPresetsList() {
         
         allPresets = await presetService.getAllPresets();
         
-        // Extraire les catégories uniques
         const categories = [...new Set(allPresets.map(p => p.category))].filter(Boolean);
         
-        // Créer les boutons de catégorie
         categories.forEach(category => {
             const btn = document.createElement('button');
             btn.className = 'category-btn';
@@ -58,7 +56,6 @@ async function loadPresetsList() {
             categoryButtons.appendChild(btn);
         });
         
-        // Afficher tous les presets par défaut
         filterByCategory('all');
         
         loadingStatus.textContent = `${allPresets.length} presets disponibles`;
@@ -72,19 +69,16 @@ async function loadPresetsList() {
 function filterByCategory(category) {
     currentCategory = category;
     
-    // Mettre à jour les boutons actifs
     document.querySelectorAll('.category-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.category === category);
     });
     
-    // Filtrer les presets
     if (category === 'all') {
         filteredPresets = allPresets;
     } else {
         filteredPresets = allPresets.filter(p => p.category === category);
     }
     
-    // Mettre à jour le menu déroulant
     updatePresetSelect();
 }
 
@@ -109,50 +103,28 @@ function updatePresetSelect() {
 }
 
 // ============================================
-// CHARGEMENT D'UN PRESET
+// PROGRESSION
 // ============================================
 
-async function loadPreset(presetId) {
-    if (!presetId) return;
-    
-    try {
-        const preset = await presetService.getPresetById(presetId);
-        currentPreset = preset;
-        
-        progressSection.style.display = 'block';
-        updateProgress(0);
-        
-        audioEngine.init();
-        
-        const presetForEngine = {
-            name: preset.name || preset.category || 'Preset',
-            samples: preset.samples || []
-        };
-        
-        await audioEngine.loadPreset(presetForEngine, (progress, loaded, total) => {
-            updateProgress(progress);
-            loadingStatus.textContent = `Chargement ${loaded}/${total}...`;
-        });
-        
-        generatePads(presetForEngine.samples.length);
-        
-        progressSection.style.display = 'none';
-        loadingStatus.textContent = `"${presetForEngine.name}" chargé !`;
-        
-    } catch (error) {
-        loadingStatus.textContent = 'Erreur chargement preset';
-        console.error('Erreur:', error);
-    }
-}
-
 function updateProgress(percent) {
-    progressFill.style.width = `${percent}%`;
-    progressText.textContent = `${percent}%`;
+    if (progressFill) {
+        progressFill.style.width = `${percent}%`;
+    }
+    if (progressText) {
+        progressText.textContent = `${percent}%`;
+    }
 }
 
 // ============================================
 // GÉNÉRATION DES PADS
 // ============================================
+
+// Mapping inverse pour afficher les touches sur les pads
+const padToKey = {
+    0: 'A', 1: 'Z', 2: 'E', 3: 'R',
+    4: 'Q', 5: 'S', 6: 'D', 7: 'F',
+    8: 'W', 9: 'X', 10: 'C', 11: 'V'
+};
 
 function generatePads(count) {
     padsGrid.innerHTML = '';
@@ -162,24 +134,27 @@ function generatePads(count) {
         return;
     }
     
-    // Calcul de la grille (4 colonnes max)
     const cols = Math.min(4, count);
     const rows = Math.ceil(count / cols);
     
     padsGrid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
     
-    // Créer tous les pads
     const padsArray = [];
     
     for (let i = 0; i < count; i++) {
         const sampleInfo = audioEngine.getSampleInfo(i);
+        const keyLabel = padToKey[i] || '';
         
         const pad = document.createElement('div');
         pad.className = 'pad';
         pad.dataset.index = i;
         pad.innerHTML = `
+            <span class="pad-key">${keyLabel}</span>
             <span class="pad-number">${i + 1}</span>
-            <span class="pad-name">${sampleInfo?.name || 'Vide'}</span>
+            <span class="pad-name">${sampleInfo?.name || 'Chargement...'}</span>
+            <div class="pad-progress-container">
+                <div class="pad-progress-bar" id="pad-progress-${i}"></div>
+            </div>
         `;
         
         pad.addEventListener('click', () => onPadClick(i));
@@ -188,17 +163,12 @@ function generatePads(count) {
     }
     
     // Réorganiser pour afficher de bas en haut
-    // Exemple avec 8 pads (2 lignes x 4 colonnes) :
-    // DOM order:  row 1 (indices 4-7), puis row 0 (indices 0-3)
-    // Visual:     row 0 en bas, row 1 en haut
-    
     for (let row = rows - 1; row >= 0; row--) {
         for (let col = 0; col < cols; col++) {
             const padIndex = row * cols + col;
             if (padIndex < count) {
                 padsGrid.appendChild(padsArray[padIndex]);
             } else {
-                // Pad vide pour compléter la grille
                 const emptyPad = document.createElement('div');
                 emptyPad.className = 'pad empty';
                 emptyPad.innerHTML = '<span class="pad-number">-</span><span class="pad-name">Vide</span>';
@@ -207,8 +177,102 @@ function generatePads(count) {
         }
     }
     
-    console.log(`[Main] ${count} pads générés (grille ${cols}x${rows}, pad 0 en bas à gauche)`);
+    console.log(`[Main] ${count} pads générés avec mapping clavier`);
 }
+
+// ============================================
+// CHARGEMENT D'UN PRESET AVEC PROGRESSION PAR PAD
+// ============================================
+
+async function loadPreset(presetId) {
+    if (!presetId) return;
+    
+    try {
+        console.log(`[Main] Chargement du preset ${presetId}...`);
+        
+        const preset = await presetService.getPresetById(presetId);
+        currentPreset = preset;
+        
+        // Afficher la progression globale (avec vérification)
+        if (progressSection) {
+            progressSection.style.display = 'block';
+        }
+        updateProgress(0);
+        
+        audioEngine.init();
+        
+        const presetForEngine = {
+            name: preset.name || preset.category || 'Preset',
+            samples: preset.samples || []
+        };
+        
+        generatePads(presetForEngine.samples.length);
+        
+        const totalSamples = presetForEngine.samples.length;
+        
+        for (let i = 0; i < totalSamples; i++) {
+            const sample = presetForEngine.samples[i];
+            const padProgressBar = document.getElementById(`pad-progress-${i}`);
+            
+            if (padProgressBar) {
+                padProgressBar.style.width = '0%';
+                padProgressBar.classList.add('loading');
+            }
+            
+            try {
+                await audioEngine.loadSample(sample.url, sample.name, i);
+                
+                if (padProgressBar) {
+                    padProgressBar.style.width = '100%';
+                    padProgressBar.classList.remove('loading');
+                    padProgressBar.classList.add('loaded');
+                }
+                
+                const pad = padsGrid.querySelector(`[data-index="${i}"]`);
+                if (pad) {
+                    const padName = pad.querySelector('.pad-name');
+                    if (padName) {
+                        padName.textContent = sample.name;
+                    }
+                }
+                
+            } catch (error) {
+                console.error(`[Main] Erreur chargement sample ${i}:`, error);
+                if (padProgressBar) {
+                    padProgressBar.classList.remove('loading');
+                    padProgressBar.classList.add('error');
+                }
+            }
+            
+            const globalProgress = Math.round(((i + 1) / totalSamples) * 100);
+            updateProgress(globalProgress);
+            loadingStatus.textContent = `Chargement ${i + 1}/${totalSamples}...`;
+        }
+        
+        setTimeout(() => {
+            if (progressSection) {
+                progressSection.style.display = 'none';
+            }
+            
+            document.querySelectorAll('.pad-progress-container').forEach(container => {
+                container.style.opacity = '0';
+            });
+        }, 500);
+        
+        loadingStatus.textContent = `"${presetForEngine.name}" chargé!`;
+        
+        console.log(`[Main] Preset "${presetForEngine.name}" chargé`);
+        
+    } catch (error) {
+        loadingStatus.textContent = 'Erreur lors du chargement du preset';
+        if (progressSection) {
+            progressSection.style.display = 'none';
+        }
+        console.error('[Main] Erreur chargement preset:', error);
+    }
+}
+
+// ...existing code (onPadClick, drawWaveform, updateTrimControls, etc.)...
 
 // ============================================
 // INTERACTION PADS
@@ -392,8 +456,151 @@ trimEndSlider.addEventListener('input', () => {
 resetTrimBtn.addEventListener('click', resetTrim);
 
 // ============================================
+// MAPPING CLAVIER
+// ============================================
+
+const keyboardMapping = {
+    // Ligne du bas (pads 0-3)
+    'a': 0,
+    'z': 1,
+    'e': 2,
+    'r': 3,
+    // Ligne du haut (pads 4-7)
+    'q': 4,
+    's': 5,
+    'd': 6,
+    'f': 7,
+    // Pads supplémentaires (8-11)
+    'w': 8,
+    'x': 9,
+    'c': 10,
+    'v': 11
+};
+
+function setupKeyboardMapping() {
+    document.addEventListener('keydown', (e) => {
+        // Ignorer si on est dans un input ou select
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') {
+            return;
+        }
+        
+        const key = e.key.toLowerCase();
+        
+        if (keyboardMapping.hasOwnProperty(key)) {
+            const padIndex = keyboardMapping[key];
+            
+            // Vérifier que le pad existe
+            if (padIndex < audioEngine.sampleCount) {
+                e.preventDefault();
+                onPadClick(padIndex);
+                console.log(`[Keyboard] Touche "${key}" -> Pad ${padIndex}`);
+            }
+        }
+    });
+    
+    console.log('[Main] Mapping clavier activé (A,Z,E,R,Q,S,D,F,W,X,C,V)');
+}
+
+// ============================================
+// SUPPORT MIDI
+// Inspiré des exemples du cours
+// ============================================
+
+let midiAccess = null;
+let midiInputs = [];
+
+async function setupMIDI() {
+    if (!navigator.requestMIDIAccess) {
+        console.log('[MIDI] Web MIDI API non supportée par ce navigateur');
+        updateMidiStatus('Non supporté');
+        return;
+    }
+    
+    try {
+        midiAccess = await navigator.requestMIDIAccess();
+        console.log('[MIDI] Accès MIDI obtenu');
+        
+        // Écouter les changements de connexion
+        midiAccess.onstatechange = onMidiStateChange;
+        
+        // Connecter les entrées MIDI existantes
+        connectMidiInputs();
+        
+    } catch (error) {
+        console.error('[MIDI] Erreur accès MIDI:', error);
+        updateMidiStatus('Erreur');
+    }
+}
+
+function connectMidiInputs() {
+    midiInputs = [];
+    
+    for (const input of midiAccess.inputs.values()) {
+        console.log(`[MIDI] Entrée détectée: ${input.name} (${input.manufacturer})`);
+        input.onmidimessage = onMidiMessage;
+        midiInputs.push(input);
+    }
+    
+    if (midiInputs.length > 0) {
+        updateMidiStatus(`${midiInputs.length} appareil(s) connecté(s)`);
+        console.log(`[MIDI] ${midiInputs.length} entrée(s) MIDI connectée(s)`);
+    } else {
+        updateMidiStatus('Aucun appareil');
+        console.log('[MIDI] Aucune entrée MIDI détectée');
+    }
+}
+
+function onMidiStateChange(event) {
+    console.log(`[MIDI] État changé: ${event.port.name} - ${event.port.state}`);
+    connectMidiInputs();
+}
+
+function onMidiMessage(event) {
+    const [status, note, velocity] = event.data;
+    
+    // Note On (status 144-159 pour les canaux 1-16)
+    // Note Off (status 128-143) ou Note On avec velocity 0
+    const isNoteOn = (status >= 144 && status <= 159) && velocity > 0;
+    const isNoteOff = (status >= 128 && status <= 143) || ((status >= 144 && status <= 159) && velocity === 0);
+    
+    if (isNoteOn) {
+        // Mapper les notes MIDI aux pads
+        // Notes 36-47 (C2-B2) ou 60-71 (C4-B4) typiques pour les pads
+        let padIndex = -1;
+        
+        // Mapping pour pads MIDI (notes 36-47, typique pour drum pads)
+        if (note >= 36 && note <= 47) {
+            padIndex = note - 36;
+        }
+        // Mapping alternatif (notes 60-71, octave du milieu)
+        else if (note >= 60 && note <= 71) {
+            padIndex = note - 60;
+        }
+        // Mapping générique (toutes les notes, modulo 12)
+        else {
+            padIndex = note % 12;
+        }
+        
+        // Jouer le pad si valide
+        if (padIndex >= 0 && padIndex < audioEngine.sampleCount) {
+            console.log(`[MIDI] Note ${note} (vel: ${velocity}) -> Pad ${padIndex}`);
+            onPadClick(padIndex);
+        }
+    }
+}
+
+function updateMidiStatus(status) {
+    const midiStatusEl = document.getElementById('midi-status');
+    if (midiStatusEl) {
+        midiStatusEl.textContent = status;
+    }
+}
+
+// ============================================
 // DÉMARRAGE
 // ============================================
 
 console.log('Sampler Audio - Démarrage');
 loadPresetsList();
+setupKeyboardMapping();
+setupMIDI();

@@ -61,19 +61,25 @@ J'ai développé une architecture modulaire en séparant clairement le moteur au
 
 #### Fonctionnalités implémentées
 
-1. **Menu de presets dynamique** : Construction du menu déroulant via une requête fetch GET sur le backend. Les presets sont chargés au démarrage et le menu est peuplé dynamiquement.
+1. **Menu de presets dynamique** : Construction du menu déroulant via une requête fetch GET sur le backend. Les presets sont chargés au démarrage et le menu est peuplé dynamiquement (inspiré de `Seance5/ClientWithDynamicDropDownMenu`).
 
 2. **Filtrage par catégories** : Boutons de catégories générés dynamiquement selon les presets disponibles (drum, kit, synth, fx, etc.). Permet de filtrer les presets affichés dans le menu.
 
 3. **Grille de pads interactive** : Les pads sont générés dynamiquement selon le nombre de samples du preset. Le pad 0 (kick pour un kit de batterie) est positionné en bas à gauche, avec un remplissage de gauche à droite et de bas en haut, conformément au sujet.
 
-4. **Visualisation waveform** : Affichage de la forme d'onde du sample sélectionné sur un canvas. Les zones de trim sont visualisées avec des zones grisées et des indicateurs visuels rouges.
+4. **Barres de progression animées** : Lors du chargement des samples, chaque pad affiche sa propre barre de progression animée. Une barre de progression globale indique également l'avancement total (ex: "Chargement 3/8...").
 
-5. **Trim des samples** : Interface avec sliders pour ajuster les points de début et de fin de chaque sample. La modification est appliquée en temps réel et visible sur la waveform. Bouton de réinitialisation pour revenir à l'état initial.
+5. **Visualisation waveform** : Affichage de la forme d'onde du sample sélectionné sur un canvas, positionné à droite des pads. Les zones de trim sont visualisées avec des zones grisées et des indicateurs visuels rouges (inspiré de `Seance4_IntroWebAudio/Example2`).
 
-6. **Barre de progression** : Affichage de la progression du chargement des samples avec pourcentage et compteur (ex: "Chargement 3/8...").
+6. **Trim des samples** : Interface avec sliders pour ajuster les points de début et de fin de chaque sample. La modification est appliquée en temps réel et visible sur la waveform. Bouton de réinitialisation pour revenir à l'état initial.
 
-7. **Mode Headless** : Page de test (`headless.html`) permettant de tester le moteur audio de manière isolée, sans interface graphique. Toutes les fonctionnalités sont accessibles via des boutons et les résultats s'affichent dans une console intégrée.
+7. **Layout en 2 colonnes** : Interface organisée avec les pads à gauche et le panneau waveform/trim à droite, comme dans les exemples du cours.
+
+8. **Mapping clavier** : Les touches A, Z, E, R (ligne du bas) et Q, S, D, F (ligne du haut) sont mappées sur les pads pour jouer les sons au clavier. Chaque pad affiche sa touche associée (inspiré de `Seance4_IntroWebAudio/Assignment/js/SamplerGUI.js`).
+
+9. **Support MIDI** : Possibilité de jouer les pads avec un contrôleur MIDI hardware (ou virtuel comme MIDIkeys sur Mac, loopMIDI sur Windows). Les notes MIDI 36-47 (C2-B2) et 60-71 (C4-B4) sont mappées sur les pads 0-11. Un indicateur affiche le statut de connexion MIDI.
+
+10. **Mode Headless** : Page de test (`headless.html`) permettant de tester le moteur audio de manière isolée, sans interface graphique. Toutes les fonctionnalités sont accessibles via des boutons et les résultats s'affichent dans une console intégrée.
 
 #### Technologies utilisées
 
@@ -81,6 +87,7 @@ J'ai développé une architecture modulaire en séparant clairement le moteur au
 - **Fetch API** : Pour les requêtes HTTP vers le backend
 - **Canvas API** : Pour le dessin de la waveform
 - **ES6 Modules** : Pour la modularité du code
+- **CSS Grid** : Pour le layout responsive en 2 colonnes
 
 #### Structure des fichiers
 

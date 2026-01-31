@@ -13,7 +13,7 @@ body {
 }
 
 .container {
-    max-width: 900px;
+    max-width: 1200px;
     margin: 0 auto;
 }
 
@@ -104,6 +104,27 @@ header h1 {
     font-size: 0.9rem;
 }
 
+/* Barre de statut header */
+.status-bar {
+    margin-top: 10px;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+.midi-indicator {
+    font-size: 0.85rem;
+    color: #888;
+    background: rgba(255,255,255,0.1);
+    padding: 5px 15px;
+    border-radius: 20px;
+}
+
+#midi-status {
+    color: #00ff88;
+    font-weight: bold;
+}
+
 /* Barre de progression */
 .progress-section {
     margin-bottom: 20px;
@@ -132,15 +153,76 @@ header h1 {
     text-align: right;
 }
 
-/* Grille de Pads */
+/* Layout principal : 2 colonnes */
+.main-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    align-items: start;
+}
+
+/* Colonne gauche : Pads */
 .pads-section {
-    margin-bottom: 30px;
+    background: rgba(255,255,255,0.05);
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.pads-section h3 {
+    margin-bottom: 15px;
+    color: #00ff88;
 }
 
 .pads-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 15px;
+}
+
+/* Colonne droite : Waveform + Trim */
+.waveform-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Barres de progression sur les pads */
+.pad-progress-container {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 0 0 13px 13px;
+    overflow: hidden;
+    transition: opacity 0.5s ease;
+}
+
+.pad-progress-bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #00ff88, #00d4ff);
+    transition: width 0.3s ease;
+}
+
+.pad-progress-bar.loading {
+    animation: loading-pulse 1s ease-in-out infinite;
+}
+
+.pad-progress-bar.loaded {
+    background: #00ff88;
+}
+
+.pad-progress-bar.error {
+    background: #ff4444;
+    width: 100%;
+}
+
+@keyframes loading-pulse {
+    0% { opacity: 0.5; }
+    50% { opacity: 1; }
+    100% { opacity: 0.5; }
 }
 
 .pad {
@@ -155,6 +237,8 @@ header h1 {
     transition: all 0.15s ease;
     border: 2px solid transparent;
     box-shadow: 5px 5px 15px rgba(0,0,0,0.3);
+    position: relative;
+    overflow: hidden;
 }
 
 .pad:hover {
@@ -193,12 +277,32 @@ header h1 {
     transform: none;
 }
 
+/* Indication mapping clavier */
+.keyboard-hint {
+    font-size: 0.85rem;
+    color: #888;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+/* Afficher la touche sur chaque pad */
+.pad-key {
+    position: absolute;
+    top: 5px;
+    right: 8px;
+    font-size: 0.7rem;
+    color: #555;
+    background: rgba(0,0,0,0.3);
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
 /* Section Trim */
 .trim-section {
     background: rgba(255,255,255,0.1);
     padding: 20px;
     border-radius: 10px;
-    margin-bottom: 20px;
 }
 
 .trim-section h3 {
@@ -280,11 +384,12 @@ header h1 {
 
 .waveform-section h3 {
     margin-bottom: 15px;
+    color: #00ff88;
 }
 
 #waveform-canvas {
     width: 100%;
-    height: 200px;
+    height: 150px;
     background: #1a1a2e;
     border-radius: 10px;
 }
@@ -294,4 +399,11 @@ header h1 {
     color: #666;
     font-size: 0.85rem;
     margin-top: 10px;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .main-layout {
+        grid-template-columns: 1fr;
+    }
 }
