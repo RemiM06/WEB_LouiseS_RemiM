@@ -158,12 +158,18 @@ function generatePads(count) {
     padsGrid.innerHTML = '';
     
     if (count === 0) {
-        padsGrid.innerHTML = '<p style="color: #aaa;">Aucun sample dans ce preset</p>';
+        padsGrid.innerHTML = '<p style="color: #aaa; text-align: center;">Aucun sample dans ce preset</p>';
         return;
     }
     
+    // Calcul de la grille (4 colonnes max)
     const cols = Math.min(4, count);
+    const rows = Math.ceil(count / cols);
+    
     padsGrid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+    
+    // Créer tous les pads
+    const padsArray = [];
     
     for (let i = 0; i < count; i++) {
         const sampleInfo = audioEngine.getSampleInfo(i);
@@ -178,8 +184,30 @@ function generatePads(count) {
         
         pad.addEventListener('click', () => onPadClick(i));
         
-        padsGrid.appendChild(pad);
+        padsArray.push(pad);
     }
+    
+    // Réorganiser pour afficher de bas en haut
+    // Exemple avec 8 pads (2 lignes x 4 colonnes) :
+    // DOM order:  row 1 (indices 4-7), puis row 0 (indices 0-3)
+    // Visual:     row 0 en bas, row 1 en haut
+    
+    for (let row = rows - 1; row >= 0; row--) {
+        for (let col = 0; col < cols; col++) {
+            const padIndex = row * cols + col;
+            if (padIndex < count) {
+                padsGrid.appendChild(padsArray[padIndex]);
+            } else {
+                // Pad vide pour compléter la grille
+                const emptyPad = document.createElement('div');
+                emptyPad.className = 'pad empty';
+                emptyPad.innerHTML = '<span class="pad-number">-</span><span class="pad-name">Vide</span>';
+                padsGrid.appendChild(emptyPad);
+            }
+        }
+    }
+    
+    console.log(`[Main] ${count} pads générés (grille ${cols}x${rows}, pad 0 en bas à gauche)`);
 }
 
 // ============================================
@@ -189,9 +217,11 @@ function generatePads(count) {
 function onPadClick(padIndex) {
     audioEngine.playSample(padIndex);
     
-    const pad = padsGrid.children[padIndex];
-    pad.classList.add('active');
-    setTimeout(() => pad.classList.remove('active'), 150);
+    const pad = padsGrid.querySelector(`[data-index="${padIndex}"]`);
+    if (pad) {
+        pad.classList.add('active');
+        setTimeout(() => pad.classList.remove('active'), 150);
+    }
     
     selectedPadIndex = padIndex;
     const sampleInfo = audioEngine.getSampleInfo(padIndex);

@@ -181,6 +181,18 @@ header h1 {
     padding: 0 5px;
 }
 
+.pad.empty {
+    background: rgba(255,255,255,0.02);
+    border: 2px dashed #333;
+    cursor: default;
+    opacity: 0.5;
+}
+
+.pad.empty:hover {
+    border-color: #333;
+    transform: none;
+}
+
 /* Section Trim */
 .trim-section {
     background: rgba(255,255,255,0.1);
