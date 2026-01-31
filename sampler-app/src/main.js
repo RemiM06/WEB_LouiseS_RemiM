@@ -119,6 +119,13 @@ function updateProgress(percent) {
 // GÉNÉRATION DES PADS
 // ============================================
 
+// Mapping inverse pour afficher les touches sur les pads
+const padToKey = {
+    0: 'A', 1: 'Z', 2: 'E', 3: 'R',
+    4: 'Q', 5: 'S', 6: 'D', 7: 'F',
+    8: 'W', 9: 'X', 10: 'C', 11: 'V'
+};
+
 function generatePads(count) {
     padsGrid.innerHTML = '';
     
@@ -136,11 +143,13 @@ function generatePads(count) {
     
     for (let i = 0; i < count; i++) {
         const sampleInfo = audioEngine.getSampleInfo(i);
+        const keyLabel = padToKey[i] || '';
         
         const pad = document.createElement('div');
         pad.className = 'pad';
         pad.dataset.index = i;
         pad.innerHTML = `
+            <span class="pad-key">${keyLabel}</span>
             <span class="pad-number">${i + 1}</span>
             <span class="pad-name">${sampleInfo?.name || 'Chargement...'}</span>
             <div class="pad-progress-container">
@@ -153,6 +162,7 @@ function generatePads(count) {
         padsArray.push(pad);
     }
     
+    // Réorganiser pour afficher de bas en haut
     for (let row = rows - 1; row >= 0; row--) {
         for (let col = 0; col < cols; col++) {
             const padIndex = row * cols + col;
@@ -167,7 +177,7 @@ function generatePads(count) {
         }
     }
     
-    console.log(`[Main] ${count} pads générés`);
+    console.log(`[Main] ${count} pads générés avec mapping clavier`);
 }
 
 // ============================================
@@ -446,8 +456,55 @@ trimEndSlider.addEventListener('input', () => {
 resetTrimBtn.addEventListener('click', resetTrim);
 
 // ============================================
+// MAPPING CLAVIER
+// ============================================
+
+const keyboardMapping = {
+    // Ligne du bas (pads 0-3)
+    'a': 0,
+    'z': 1,
+    'e': 2,
+    'r': 3,
+    // Ligne du haut (pads 4-7)
+    'q': 4,
+    's': 5,
+    'd': 6,
+    'f': 7,
+    // Pads supplémentaires (8-11)
+    'w': 8,
+    'x': 9,
+    'c': 10,
+    'v': 11
+};
+
+function setupKeyboardMapping() {
+    document.addEventListener('keydown', (e) => {
+        // Ignorer si on est dans un input ou select
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') {
+            return;
+        }
+        
+        const key = e.key.toLowerCase();
+        
+        if (keyboardMapping.hasOwnProperty(key)) {
+            const padIndex = keyboardMapping[key];
+            
+            // Vérifier que le pad existe
+            if (padIndex < audioEngine.sampleCount) {
+                e.preventDefault();
+                onPadClick(padIndex);
+                console.log(`[Keyboard] Touche "${key}" -> Pad ${padIndex}`);
+            }
+        }
+    });
+    
+    console.log('[Main] Mapping clavier activé (A,Z,E,R,Q,S,D,F,W,X,C,V)');
+}
+
+// ============================================
 // DÉMARRAGE
 // ============================================
 
 console.log('Sampler Audio - Démarrage');
 loadPresetsList();
+setupKeyboardMapping();

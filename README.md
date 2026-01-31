@@ -75,7 +75,9 @@ J'ai développé une architecture modulaire en séparant clairement le moteur au
 
 7. **Layout en 2 colonnes** : Interface organisée avec les pads à gauche et le panneau waveform/trim à droite, comme dans les exemples du cours.
 
-8. **Mode Headless** : Page de test (`headless.html`) permettant de tester le moteur audio de manière isolée, sans interface graphique. Toutes les fonctionnalités sont accessibles via des boutons et les résultats s'affichent dans une console intégrée.
+8. **Mapping clavier** : Les touches A, Z, E, R (ligne du bas) et Q, S, D, F (ligne du haut) sont mappées sur les pads pour jouer les sons au clavier. Chaque pad affiche sa touche associée (inspiré de `Seance4_IntroWebAudio/Assignment/js/SamplerGUI.js`).
+
+9. **Mode Headless** : Page de test (`headless.html`) permettant de tester le moteur audio de manière isolée, sans interface graphique. Toutes les fonctionnalités sont accessibles via des boutons et les résultats s'affichent dans une console intégrée.
 
 #### Technologies utilisées
 
