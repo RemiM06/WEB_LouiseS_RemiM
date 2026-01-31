@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sampler Audio</title>
+    <link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Sampler Audio</h1>
+        </header>
+
+        <!-- Filtres par catégorie -->
+        <section class="category-section">
+            <label>Catégorie :</label>
+            <div class="category-buttons" id="category-buttons">
+                <button class="category-btn active" data-category="all">Tous</button>
+                <!-- Les autres catégories seront générées dynamiquement -->
+            </div>
+        </section>
+
+        <!-- Sélecteur de Preset -->
+        <section class="preset-section">
+            <label for="preset-select">Preset :</label>
+            <select id="preset-select" disabled>
+                <option value="">-- Chargement... --</option>
+            </select>
+            <span id="loading-status"></span>
+        </section>
+
+        <!-- Barre de progression -->
+        <section class="progress-section" id="progress-section" style="display: none;">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+            <span id="progress-text">0%</span>
+        </section>
+
+        <!-- Grille de Pads -->
+        <section class="pads-section">
+            <div class="pads-grid" id="pads-grid">
+                <!-- Les pads seront générés dynamiquement -->
+            </div>
+        </section>
+
+        <!-- Contrôles de Trim -->
+        <section class="trim-section" id="trim-section" style="display: none;">
+            <h3>Trim : <span id="trim-sample-name">-</span></h3>
+            <div class="trim-controls">
+                <div class="trim-slider-group">
+                    <label>Début : <span id="trim-start-value">0.00s</span></label>
+                    <input type="range" id="trim-start" min="0" max="1000" value="0" step="1">
+                </div>
+                <div class="trim-slider-group">
+                    <label>Fin : <span id="trim-end-value">0.00s</span></label>
+                    <input type="range" id="trim-end" min="0" max="1000" value="1000" step="1">
+                </div>
+                <button id="reset-trim">Réinitialiser</button>
+            </div>
+        </section>
+
+        <!-- Visualisation Waveform -->
+        <section class="waveform-section">
+            <h3>Forme d'onde : <span id="current-sample-name">-</span></h3>
+            <canvas id="waveform-canvas" width="800" height="200"></canvas>
+            <div class="waveform-info">
+                <span>Cliquez sur un pad pour voir sa forme d'onde</span>
+            </div>
+        </section>
+    </div>
+
+    <script type="module" src="src/main.js"></script>
+</body>
+</html>

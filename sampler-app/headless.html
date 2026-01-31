@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sampler Audio - Mode Headless (Test)</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0a0a0a;
+            color: #00ff00;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #00ff88;
+            border-bottom: 2px solid #00ff88;
+            padding-bottom: 10px;
+        }
+        .console {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .log {
+            margin: 5px 0;
+            padding: 5px;
+        }
+        .log.info { color: #00d4ff; }
+        .log.success { color: #00ff88; }
+        .log.error { color: #ff4444; }
+        .log.warn { color: #ffaa00; }
+        
+        button {
+            background: linear-gradient(145deg, #00ff88, #00d4ff);
+            border: none;
+            padding: 12px 24px;
+            margin: 5px;
+            border-radius: 8px;
+            color: #0a0a0a;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 14px;
+            transition: transform 0.1s;
+        }
+        button:hover {
+            transform: scale(1.05);
+        }
+        button:disabled {
+            background: #333;
+            color: #666;
+            cursor: not-allowed;
+        }
+        
+        .controls {
+            margin: 20px 0;
+        }
+        
+        .status {
+            background: rgba(0, 255, 136, 0.1);
+            border-left: 4px solid #00ff88;
+            padding: 15px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1> Sampler Audio - Mode Headless</h1>
+    
+    <div class="status">
+        <strong>Mode de test sans GUI</strong><br>
+        Ce mode teste le moteur audio (<code>AudioEngine</code>) de manière isolée.<br>
+        Tous les logs s'affichent dans la console ci-dessous.
+    </div>
+
+    <div class="controls">
+        <button id="btn-init">Initialiser AudioEngine</button>
+        <button id="btn-fetch" disabled> Récupérer les Presets</button>
+        <button id="btn-load" disabled> Charger le Premier Preset</button>
+        <button id="btn-play-0" disabled> Jouer Pad 0</button>
+        <button id="btn-play-1" disabled> Jouer Pad 1</button>
+        <button id="btn-play-2" disabled> Jouer Pad 2</button>
+        <button id="btn-play-3" disabled> Jouer Pad 3</button>
+        <button id="btn-trim" disabled> Tester Trim (Pad 0)</button>
+    </div>
+
+    <h2> Console de Test</h2>
+    <div class="console" id="console"></div>
+
+    <script type="module">
+        import { AudioEngine } from './src/engine/AudioEngine.js';
+        import { PresetService } from './src/services/PresetService.js';
+
+        // ============================================
+        // CONSOLE PERSONNALISÉE
+        // ============================================
+
+        const consoleDiv = document.getElementById('console');
+
+        function log(message, type = 'info') {
+            const logEntry = document.createElement('div');
+            logEntry.className = `log ${type}`;
+            logEntry.innerHTML = `<strong>[${new Date().toLocaleTimeString()}]</strong> ${message}`;
+            consoleDiv.appendChild(logEntry);
+            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+            
+            // Aussi dans la vraie console
+            console.log(`[HEADLESS] ${message}`);
+        }
+
+        // ============================================
+        // INITIALISATION
+        // ============================================
+
+        const audioEngine = new AudioEngine();
+        const presetService = new PresetService('http://localhost:3000');
+
+        let presets = [];
+        let currentPreset = null;
+
+        // Boutons
+        const btnInit = document.getElementById('btn-init');
+        const btnFetch = document.getElementById('btn-fetch');
+        const btnLoad = document.getElementById('btn-load');
+        const btnPlay0 = document.getElementById('btn-play-0');
+        const btnPlay1 = document.getElementById('btn-play-1');
+        const btnPlay2 = document.getElementById('btn-play-2');
+        const btnPlay3 = document.getElementById('btn-play-3');
+        const btnTrim = document.getElementById('btn-trim');
+
+        // ============================================
+        // ÉTAPE 1 : INITIALISER AUDIOENGINE
+        // ============================================
+
+        btnInit.addEventListener('click', () => {
+            log('Initialisation de l\'AudioEngine...', 'info');
+            try {
+                audioEngine.init();
+                log(` AudioEngine initialisé (Sample Rate: ${audioEngine.audioContext.sampleRate} Hz)`, 'success');
+                btnInit.disabled = true;
+                btnFetch.disabled = false;
+            } catch (error) {
+                log(` Erreur initialisation: ${error.message}`, 'error');
+            }
+        });
+
+        // ============================================
+        // ÉTAPE 2 : RÉCUPÉRER LES PRESETS
+        // ============================================
+
+        btnFetch.addEventListener('click', async () => {
+            log('Récupération des presets depuis le serveur...', 'info');
+            try {
+                presets = await presetService.getAllPresets();
+                log(` ${presets.length} preset(s) récupéré(s)`, 'success');
+                
+                presets.forEach((preset, index) => {
+                    const displayName = preset.name || preset.category || 'Sans nom';
+                    log(`   ${index}: "${displayName}" (${preset.samples?.length || 0} samples)`, 'info');
+                });
+                
+                if (presets.length > 0) {
+                    btnFetch.disabled = true;
+                    btnLoad.disabled = false;
+                } else {
+                    log('⚠️ Aucun preset disponible', 'warn');
+                }
+            } catch (error) {
+                log(` Erreur fetch presets: ${error.message}`, 'error');
+            }
+        });
+
+        // ============================================
+        // ÉTAPE 3 : CHARGER UN PRESET
+        // ============================================
+
+        btnLoad.addEventListener('click', async () => {
+            if (presets.length === 0) return;
+            
+            const preset = presets[0];
+            const displayName = preset.name || preset.category || 'Sans nom';
+            
+            log(`Chargement du preset "${displayName}"...`, 'info');
+            
+            try {
+                // Adapter pour AudioEngine
+                const presetForEngine = {
+                    name: displayName,
+                    samples: preset.samples || []
+                };
+                
+                // Charger avec callback de progression
+                await audioEngine.loadPreset(presetForEngine, (progress, loaded, total) => {
+                    log(`   Progression: ${progress}% (${loaded}/${total})`, 'info');
+                });
+                
+                currentPreset = preset;
+                log(` Preset "${displayName}" chargé avec succès !`, 'success');
+                log(`   ${audioEngine.sampleCount} samples prêts à jouer`, 'success');
+                
+                // Afficher infos de chaque sample
+                for (let i = 0; i < audioEngine.sampleCount; i++) {
+                    const info = audioEngine.getSampleInfo(i);
+                    if (info && info.buffer) {
+                        log(`   Pad ${i}: "${info.name}" (${info.buffer.duration.toFixed(2)}s)`, 'info');
+                    }
+                }
+                
+                btnLoad.disabled = true;
+                btnPlay0.disabled = false;
+                btnPlay1.disabled = false;
+                btnPlay2.disabled = false;
+                btnPlay3.disabled = false;
+                btnTrim.disabled = false;
+                
+            } catch (error) {
+                log(` Erreur chargement preset: ${error.message}`, 'error');
+            }
+        });
+
+        // ============================================
+        // JOUER LES PADS
+        // ============================================
+
+        function playPad(padIndex) {
+            const info = audioEngine.getSampleInfo(padIndex);
+            if (!info) {
+                log(` Pad ${padIndex} vide`, 'warn');
+                return;
+            }
+            
+            log(`▶ Jouer Pad ${padIndex}: "${info.name}"`, 'success');
+            const source = audioEngine.playSample(padIndex);
+            
+            if (source) {
+                source.onended = () => {
+                    log(`⏹ Pad ${padIndex} terminé`, 'info');
+                };
+            }
+        }
+
+        btnPlay0.addEventListener('click', () => playPad(0));
+        btnPlay1.addEventListener('click', () => playPad(1));
+        btnPlay2.addEventListener('click', () => playPad(2));
+        btnPlay3.addEventListener('click', () => playPad(3));
+
+        // ============================================
+        // TESTER LE TRIM
+        // ============================================
+
+        btnTrim.addEventListener('click', () => {
+            const padIndex = 0;
+            const info = audioEngine.getSampleInfo(padIndex);
+            
+            if (!info || !info.buffer) {
+                log(' Pad 0 vide', 'warn');
+                return;
+            }
+            
+            const duration = info.buffer.duration;
+            const newStart = duration * 0.1; // 10% du début
+            const newEnd = duration * 0.9;   // 90% de la durée
+            
+            log(` Application du trim sur Pad 0...`, 'info');
+            log(`   Durée originale: ${duration.toFixed(2)}s`, 'info');
+            log(`   Nouveau range: ${newStart.toFixed(2)}s - ${newEnd.toFixed(2)}s`, 'info');
+            
+            audioEngine.setTrim(padIndex, newStart, newEnd);
+            
+            const updatedInfo = audioEngine.getSampleInfo(padIndex);
+            log(` Trim appliqué: ${updatedInfo.trimStart.toFixed(2)}s - ${updatedInfo.trimEnd.toFixed(2)}s`, 'success');
+            log('   Rejoue le Pad 0 pour entendre la différence !', 'info');
+        });
+
+        // ============================================
+        // MESSAGE DE DÉMARRAGE
+        // ============================================
+
+        log(' Sampler Audio - Mode Headless initialisé', 'success');
+        log('Clique sur les boutons dans l\'ordre pour tester le moteur audio', 'info');
+    </script>
+</body>
+</html>
